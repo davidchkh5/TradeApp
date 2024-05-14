@@ -146,13 +146,13 @@ namespace TradeApp.Controllers
         }
 
         [HttpPut("{id}/itemPhoto/set-main-photo/{itemPhotoId}")]
-        public async Task<ActionResult> SetMainItemPhoto(int id,int photoId)
+        public async Task<ActionResult> SetMainItemPhoto(int id,int itemPhotoId)
         {
             var item = await _itemRepository.GetItemByIdAsync(id);
 
             if (item == null) return NotFound();
 
-            var photo = item.Photos.FirstOrDefault(x => x.Id == photoId);
+            var photo = item.Photos.FirstOrDefault(x => x.Id == itemPhotoId);
             if (photo == null) return NotFound();
 
             if (photo.IsMain) return BadRequest("This is already item's main photo");
@@ -198,7 +198,7 @@ namespace TradeApp.Controllers
 
             var itemPhoto = item.Photos.FirstOrDefault(x => x.Id == itemPhotoId);
 
-            if (itemPhoto == null) return NotFound();
+            if (itemPhoto == null) return NotFound("Photo was not found");
 
             if (itemPhoto.IsMain) return BadRequest("You can not delete your main photo");
 
