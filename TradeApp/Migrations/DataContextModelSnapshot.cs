@@ -263,6 +263,9 @@ namespace TradeApp.Migrations
                     b.Property<string>("PhotoUrl")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PublicId")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");

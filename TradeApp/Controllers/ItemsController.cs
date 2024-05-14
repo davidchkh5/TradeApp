@@ -1,26 +1,26 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using TradeApp.Dtos;
 using TradeApp.Entities;
 using TradeApp.Interfaces;
 using TradeApp.Extensions;
 using AutoMapper;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace TradeApp.Controllers
 {
- 
+
     public class ItemsController : BaseApiController
     {
         private readonly IItemRepository _itemRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
-        public ItemsController(IItemRepository itemRepository, IUserRepository userRepository, IMapper mapper)
+        private readonly IItemPhotoService _itemPhotoService;
+        public ItemsController(IItemRepository itemRepository, IUserRepository userRepository, IMapper mapper, IItemPhotoService itemPhotoService)
         {
             _itemRepository = itemRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _itemPhotoService = itemPhotoService;
         }
 
 
@@ -89,47 +89,53 @@ namespace TradeApp.Controllers
 
         //Not Tested!
 
-        [HttpPut("{id}/itemPhoto/add")]
-        public async Task<ActionResult> AddItemPhoto(int id, AddItemPhotoDto addPhotoItemDto) 
+        [HttpPost("{id}/itemPhoto/add")]
+        public async Task<ActionResult<ItemPhotoDto>> AddItemPhoto(int id,IFormFile file) 
         {
             //Find the item
             var item = await _itemRepository.GetItemByIdAsync(id);
-            if (item == null) return NotFound("Item was not found"); 
-
-            if(item.Photos.Count == 0)
+            if (item == null) return NotFound("Item was not found");
+            var result = await _itemPhotoService.AddItemPhotoAsync(file);
+            if(result.Error != null) return BadRequest(result.Error.Message);
+            var itemPhoto = new ItemPhoto()
             {
-                //Create new object 
-                item.Photos = new List<ItemPhoto>()
-                {
-                    new ItemPhoto()
-                    {
-                        PhotoUrl = addPhotoItemDto.PhotoUrl,
-                        Item = item,
-                        ItemId = item.Id
-                    }
-                };
-            }   
-            else
-            {
-                //Add in List the object
-                var itemPhotoToAdd = new ItemPhoto()
-                {
-                    PhotoUrl = addPhotoItemDto.PhotoUrl,
-                    Item = item,
-                    ItemId = item.Id
-                };
+                PhotoUrl = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId
+            };
 
-                item.Photos.Add(itemPhotoToAdd);
+            if (item.Photos.Count == 0) itemPhoto.IsMain = true;
+
+            item.Photos.Add(itemPhoto);
+
+            //Add in List the object
+          /**    var itemPhotoToAdd = new ItemPhoto()
+                 {
+                      PhotoUrl = addPhotoItemDto.PhotoUrl,
+               Item = item,
+                ItemId = item.Id
+              }; 
+            item.Photos.Add(photo); 
+          
+            */
+
+
+            if(await _itemRepository.SaveChangesAsync())
+            {
+                return Created("Photo",_mapper.Map<ItemPhotoDto>(itemPhoto));
             }
 
-           await _itemRepository.UpdateItem(item);
+            return BadRequest("Problem adding item photo");
+
+        /* await _itemRepository.UpdateItem(item);
 
             var itemToReturn = _mapper.Map<List<ItemPhotoDto>>(item.Photos);
 
             await _itemRepository.SaveChangesAsync();
 
             return Ok(itemToReturn);   
-        }
+        */
+        } 
+        
 
         [HttpGet("{id}/itemPhoto")]
         public async Task<ActionResult<List<ItemPhotoDto>>> GetItemPhotoByItemId(int id)
@@ -139,7 +145,74 @@ namespace TradeApp.Controllers
             return photosToReturn;
         }
 
+        [HttpPut("{id}/itemPhoto/set-main-photo/{itemPhotoId}")]
+        public async Task<ActionResult> SetMainItemPhoto(int id,int photoId)
+        {
+            var item = await _itemRepository.GetItemByIdAsync(id);
+
+            if (item == null) return NotFound();
+
+            var photo = item.Photos.FirstOrDefault(x => x.Id == photoId);
+            if (photo == null) return NotFound();
+
+            if (photo.IsMain) return BadRequest("This is already item's main photo");
+
+            var currentMain = item.Photos.FirstOrDefault(x => x.IsMain);
+
+            if (currentMain != null) currentMain.IsMain = false;
+            photo.IsMain = true;
+
+            if (await _itemRepository.SaveChangesAsync()) return NoContent();
+
+            return BadRequest("Problem setting the main photo");
+        }
+
+
+        /**   [HttpPut("{id}/itemPhoto/delete/{itemPhotoId}")]
+           public async Task<ActionResult> DeleteItemPhoto(int id, int itemPhotoId)
+           {
+               var item = await _itemRepository.GetItemByIdAsync(id);
+
+               if (item.Photos.Count == 0) return NotFound("no photos found");
+
+               var photoToDelete = item.Photos.FirstOrDefault(p => p.Id == itemPhotoId);
+               if (photoToDelete == null) return NotFound("Photo for this Id not found");
+               if (!item.Photos.Contains(photoToDelete)) return NotFound("Photo to delete could not be found");
+               if (item.Photos.Remove(photoToDelete))
+               {
+                   await _itemRepository.UpdateItem(item);
+                   await _itemRepository.SaveChangesAsync();
+                   return Ok();
+
+               }else
+               {
+                   return BadRequest("Photo could not be deleted");
+               }
         
-        
+           }*/
+
+        [HttpDelete("{id}/itemPhoto/delete/{itemPhotoId}")]
+        public async Task<ActionResult> DeleteItemPhoto(int id,int itemPhotoId)
+        {
+            var item = await _itemRepository.GetItemByIdAsync(id);
+
+            var itemPhoto = item.Photos.FirstOrDefault(x => x.Id == itemPhotoId);
+
+            if (itemPhoto == null) return NotFound();
+
+            if (itemPhoto.IsMain) return BadRequest("You can not delete your main photo");
+
+            if (itemPhoto.PublicId != null)
+            {
+                var result = await _itemPhotoService.DeleteItemPhotoAsync(itemPhoto.PublicId);
+                if (result.Error != null) return BadRequest(result.Error.Message);
+            }
+
+            item.Photos.Remove(itemPhoto);
+
+            if (await _itemRepository.SaveChangesAsync()) return Ok();
+
+            return BadRequest("Problem deleting photo");
+        }
     }
 }

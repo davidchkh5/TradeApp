@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TradeApp.Data;
+using TradeApp.Helpers;
 using TradeApp.Interfaces;
 using TradeApp.Repositories;
 using TradeApp.Services;
@@ -18,6 +19,9 @@ namespace TradeApp.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddScoped<IItemRepository, ItemRepository>();
+            services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
+            services.AddScoped<IItemPhotoService, ItemPhotoService>();
+           
 
 
             return services;

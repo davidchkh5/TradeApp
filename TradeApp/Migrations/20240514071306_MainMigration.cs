@@ -193,6 +193,7 @@ namespace TradeApp.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     PhotoUrl = table.Column<string>(type: "TEXT", nullable: true),
                     IsMain = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PublicId = table.Column<string>(type: "TEXT", nullable: true),
                     ItemId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

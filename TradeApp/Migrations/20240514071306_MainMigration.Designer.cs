@@ -11,7 +11,7 @@ using TradeApp.Data;
 namespace TradeApp.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240512162941_MainMigration")]
+    [Migration("20240514071306_MainMigration")]
     partial class MainMigration
     {
         /// <inheritdoc />
@@ -264,6 +264,9 @@ namespace TradeApp.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PhotoUrl")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PublicId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
