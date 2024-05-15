@@ -88,13 +88,18 @@ namespace TradeApp.Controllers
 
 
         //Not Tested!
-
+        [Authorize]
         [HttpPost("{id}/itemPhoto/add")]
         public async Task<ActionResult<ItemPhotoDto>> AddItemPhoto(int id,IFormFile file) 
         {
+            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            if(currentUser == null) return Unauthorized();
+
+
             //Find the item
             var item = await _itemRepository.GetItemByIdAsync(id);
             if (item == null) return NotFound("Item was not found");
+            if (!currentUser.Items.Contains(item)) return BadRequest("you do not have access for this item");
             var result = await _itemPhotoService.AddItemPhotoAsync(file);
             if(result.Error != null) return BadRequest(result.Error.Message);
             var itemPhoto = new ItemPhoto()
@@ -136,7 +141,7 @@ namespace TradeApp.Controllers
         */
         } 
         
-
+       
         [HttpGet("{id}/itemPhoto")]
         public async Task<ActionResult<List<ItemPhotoDto>>> GetItemPhotoByItemId(int id)
         {
@@ -144,13 +149,15 @@ namespace TradeApp.Controllers
             var photosToReturn = _mapper.Map<List<ItemPhotoDto>>(photos);
             return photosToReturn;
         }
-
+        [Authorize]
         [HttpPut("{id}/itemPhoto/set-main-photo/{itemPhotoId}")]
         public async Task<ActionResult> SetMainItemPhoto(int id,int itemPhotoId)
         {
+            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            if (currentUser == null) return Unauthorized();
             var item = await _itemRepository.GetItemByIdAsync(id);
-
             if (item == null) return NotFound();
+            if (!currentUser.Items.Contains(item)) return BadRequest("you do not have access for this item");
 
             var photo = item.Photos.FirstOrDefault(x => x.Id == itemPhotoId);
             if (photo == null) return NotFound();
@@ -191,14 +198,19 @@ namespace TradeApp.Controllers
         
            }*/
 
+        [Authorize]
         [HttpDelete("{id}/itemPhoto/delete/{itemPhotoId}")]
         public async Task<ActionResult> DeleteItemPhoto(int id,int itemPhotoId)
         {
+            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            if (currentUser == null) return Unauthorized();
+            
             var item = await _itemRepository.GetItemByIdAsync(id);
-
+            if (item == null) return NotFound();
+            if (!currentUser.Items.Contains(item)) return BadRequest("you do not have access for this item");
             var itemPhoto = item.Photos.FirstOrDefault(x => x.Id == itemPhotoId);
 
-            if (itemPhoto == null) return NotFound("Photo was not found");
+            if (itemPhoto == null) return NotFound("Photo was not found for this item");
 
             if (itemPhoto.IsMain) return BadRequest("You can not delete your main photo");
 
