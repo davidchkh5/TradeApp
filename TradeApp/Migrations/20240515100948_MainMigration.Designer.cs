@@ -11,7 +11,7 @@ using TradeApp.Data;
 namespace TradeApp.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240514071306_MainMigration")]
+    [Migration("20240515100948_MainMigration")]
     partial class MainMigration
     {
         /// <inheritdoc />
