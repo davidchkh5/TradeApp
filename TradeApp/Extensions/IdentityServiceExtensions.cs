@@ -34,7 +34,7 @@ namespace TradeApp.Extensions
 
             services.AddAuthorization(opt =>
             {
-                opt.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+                opt.AddPolicy("RequiredAdminRole", policy => policy.RequireRole("Admin"));
             });
             return services;
         }

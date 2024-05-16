@@ -15,7 +15,7 @@ namespace TradeApp.Helpers
                 .ForMember(idt => idt.OwnerId, i => i.MapFrom(s => s.Owner.Id));
             CreateMap<ItemPhoto, ItemPhotoDto>();
             CreateMap<UpdateUserDto, AppUser>()
-             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null)); //Checks all properties from UpdateUserDto to AppUser and data with null value will not mapped
+             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null)); //Checks all properties before mapping from UpdateUserDto to AppUser and data with null value will not be mapped
         }
 
     }
