@@ -25,7 +25,7 @@ namespace TradeApp.Extensions
                  roleManager.CreateAsync(role);
             }
 
-            if ( userManager.Users.FirstOrDefaultAsync(u => u.UserName == "admin") == null)
+            if (!userManager.Users.Any(u => u.UserName == "admin"))
             {
                 var admin = new AppUser
                 {

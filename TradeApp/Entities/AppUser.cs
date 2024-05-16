@@ -10,6 +10,8 @@ namespace TradeApp.Entities
         public DateTime LastActive { get; set; } = DateTime.UtcNow;
         public ICollection<AppUserRole> UserRoles { get; set; }
         public List<Item> Items { get; set; }
+        public string Country { get; set; }
+        public string City { get; set; }
 
     }
 }

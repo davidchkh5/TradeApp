@@ -15,7 +15,7 @@ namespace TradeApp.Entities
         public int OwnerId { get; set; }
         public AppUser Owner { get; set; }
         public string Description { get; set; }
-        public string TradeFor{ get; set; }
+        public string TradeFor { get; set; }
        
     }
 }

@@ -33,10 +33,18 @@ namespace TradeApp.Repositories
         {
             return await _context.Users.ToListAsync();
         }
+        
+        
 
-        public async Task SaveChangesAsync()
+        public async Task<bool> SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();  
+            return await _context.SaveChangesAsync() > 0;  
+        }
+
+        public Task UpdateUserAsync(AppUser user)
+        {
+            _context.Users.Update(user);
+            return Task.CompletedTask;
         }
     }
 }
