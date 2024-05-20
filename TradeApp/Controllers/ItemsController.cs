@@ -5,6 +5,7 @@ using TradeApp.Entities;
 using TradeApp.Interfaces;
 using TradeApp.Extensions;
 using AutoMapper;
+using TradeApp.Helpers;
 
 namespace TradeApp.Controllers
 {
@@ -58,11 +59,13 @@ namespace TradeApp.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<List<ItemDto>>> GetItems()
+        public async Task<ActionResult<PagedList<ItemDto>>> GetItems([FromQuery]UserParams userParams)
         {
-            var item = await _itemRepository.GetItemsAsync();
-            var itemToReturn = _mapper.Map<List<ItemDto>>(item);
-            return itemToReturn ;
+            var items = await _itemRepository.GetItemsDtoAsync(userParams);
+
+            Response.AddPaginationHeader(new PaginationHeader(items.CurrentPage, items.PageSize, items.TotalCount, items.TotalPages));
+            //var itemToReturn = _mapper.Map<List<ItemDto>>(item);
+            return Ok(items) ;
         }
 
         [HttpGet("{id}")]

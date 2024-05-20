@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradeApp.Data;
 using TradeApp.Dtos;
 using TradeApp.Entities;
+using TradeApp.Helpers;
 using TradeApp.Interfaces;
 
 namespace TradeApp.Repositories
@@ -64,6 +66,13 @@ namespace TradeApp.Repositories
         public Task<List<Item>> GetItemsByOwnerIdAsync(int ownerId)
         {
             return _context.Item.Where(i => i.OwnerId == ownerId).ToListAsync();
+        }
+
+        public async Task<PagedList<ItemDto>> GetItemsDtoAsync(UserParams userParams)
+        {
+            var query =  _context.Item.Include(i => i.Owner).ProjectTo<ItemDto>(_mapper.ConfigurationProvider).AsQueryable().AsNoTracking();
+   
+            return await PagedList<ItemDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize); ;
         }
 
         public async Task<bool> SaveChangesAsync()
