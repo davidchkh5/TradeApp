@@ -1,21 +1,14 @@
-
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Writers;
-using System.Text;
 using TradeApp.Data;
 using TradeApp.Entities;
 using TradeApp.Extensions;
-using TradeApp.Interfaces;
-using TradeApp.Services;
 
 namespace TradeApp
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +20,7 @@ namespace TradeApp
 
             builder.Services.AddDbContext<DataContext>(opt =>
             {
-                opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+                opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
             builder.Services.AddCors();
 
@@ -62,8 +55,8 @@ namespace TradeApp
                 var context = services.GetRequiredService<DataContext>();
                 var userManager = services.GetRequiredService<UserManager<AppUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-                 context.Database.MigrateAsync();
-                 AdminCreateExtension.CreateAdmin(userManager,roleManager);
+               await context.Database.MigrateAsync();
+               await AdminCreateExtension.CreateAdmin(userManager,roleManager);
             }
             catch (Exception ex)
             {

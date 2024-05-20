@@ -8,7 +8,7 @@ namespace TradeApp.Extensions
     public class AdminCreateExtension
     {
 
-        public static void CreateAdmin(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
+        public async static Task CreateAdmin(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
         {
 
 
@@ -22,7 +22,7 @@ namespace TradeApp.Extensions
             foreach (var role in roles)
             {
 
-                 roleManager.CreateAsync(role);
+                 await roleManager.CreateAsync(role);
             }
 
             if (!userManager.Users.Any(u => u.UserName == "admin"))
@@ -31,8 +31,8 @@ namespace TradeApp.Extensions
                 {
                     UserName = "admin"
                 };
-                 userManager.CreateAsync(admin, "Pa$$w0rd");
-                 userManager.AddToRolesAsync(admin, new[] { "Admin", "Moderator" });
+                await userManager.CreateAsync(admin, "Pa$$w0rd");
+                await userManager.AddToRolesAsync(admin, new[] { "Admin", "Moderator" });
             }
         }
 

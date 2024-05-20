@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradeApp.Entities;
+using TradeApp.Interfaces;
 
 namespace TradeApp.Controllers
 {
@@ -10,9 +11,11 @@ namespace TradeApp.Controllers
     {
 
         private readonly UserManager<AppUser> _userManager;
-        public AdminController(UserManager<AppUser> userManager)
+        private readonly IItemRepository _itemRepository;
+        public AdminController(UserManager<AppUser> userManager, IItemRepository itemRepository)
         {
             _userManager = userManager;
+            _itemRepository = itemRepository;
         }
 
         [Authorize(Policy = "RequiredAdminRole")]
@@ -29,6 +32,7 @@ namespace TradeApp.Controllers
 
             return Ok(users);
         }
+
 
         [Authorize(Policy = "RequiredAdminRole")]
         [HttpPost("edit-roles/{username}")]
@@ -65,6 +69,16 @@ namespace TradeApp.Controllers
             if (!result.IsCompletedSuccessfully) return BadRequest("the user can not be deleted");
 
             return Ok("user was deleted successfully");
+        }
+
+        [Authorize(Policy = "RequiredAdminRole")]
+        [HttpDelete("delete-item/{itemId}")]
+        public async Task<ActionResult> DeleteItem(int ItemId)
+        {
+           var item = await _itemRepository.GetItemByIdAsync(ItemId);
+            if (item == null) return NotFound("Item was not found");
+            if (await _itemRepository.DeleteItemAsync(ItemId) == false) return BadRequest("The item could not be deleted");
+            return Ok("The itme has deleted successfully");
         }
 
     }
