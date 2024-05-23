@@ -1,13 +1,10 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradeApp.Dtos;
 using TradeApp.Entities;
-using TradeApp.Extensions;
 using TradeApp.Interfaces;
-using TradeApp.Repositories;
 
 namespace TradeApp.Controllers
 {

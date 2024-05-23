@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TradeApp.Data;
 
 #nullable disable
 
-namespace TradeApp.Data.Migrations
+namespace TradeApp.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240520063321_MainMigration")]
-    partial class MainMigration
+    partial class DataContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -267,6 +264,9 @@ namespace TradeApp.Data.Migrations
                     b.Property<string>("TradeFor")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
@@ -299,6 +299,33 @@ namespace TradeApp.Data.Migrations
                     b.HasIndex("ItemId");
 
                     b.ToTable("ItemPhotos");
+                });
+
+            modelBuilder.Entity("TradeApp.Entities.Offer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PosterUsername")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("Offer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -378,6 +405,17 @@ namespace TradeApp.Data.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("TradeApp.Entities.Offer", b =>
+                {
+                    b.HasOne("TradeApp.Entities.Item", "Item")
+                        .WithMany("Offers")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("TradeApp.Entities.AppRole", b =>
                 {
                     b.Navigation("UserRoles");
@@ -392,6 +430,8 @@ namespace TradeApp.Data.Migrations
 
             modelBuilder.Entity("TradeApp.Entities.Item", b =>
                 {
+                    b.Navigation("Offers");
+
                     b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618

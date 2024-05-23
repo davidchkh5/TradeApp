@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TradeApp.Dtos;
 using TradeApp.Entities;
-using TradeApp.Interfaces;
 using TradeApp.Extensions;
-using AutoMapper;
 using TradeApp.Helpers;
+using TradeApp.Interfaces;
 
 namespace TradeApp.Controllers
 {
@@ -41,11 +41,11 @@ namespace TradeApp.Controllers
                 Name = addItemDto.Name,
                 Owner = currentUser,
                 MainPhotoUrl = addItemDto.ItemPhotoUrl,
-                OwnerId = currentUser.Id, 
+                OwnerId = currentUser.Id,
             };
             var itemToReturn = _mapper.Map<ItemDto>(item);
 
-           await _itemRepository.AddItemAsync(item);
+            await _itemRepository.AddItemAsync(item);
             if (await _itemRepository.SaveChangesAsync())
             {
                 return Ok("Item Has Created Successfully");
@@ -53,29 +53,29 @@ namespace TradeApp.Controllers
             else
             {
                 return BadRequest("Could not be created an item");
-            }                     
+            }
         }
 
 
 
         [HttpGet]
-        public async Task<ActionResult<PagedList<ItemDto>>> GetItems([FromQuery]UserParams userParams)
+        public async Task<ActionResult<PagedList<ItemDto>>> GetItems([FromQuery] UserParams userParams)
         {
             var items = await _itemRepository.GetItemsDtoAsync(userParams);
 
             Response.AddPaginationHeader(new PaginationHeader(items.CurrentPage, items.PageSize, items.TotalCount, items.TotalPages));
             //var itemToReturn = _mapper.Map<List<ItemDto>>(item);
-            return Ok(items) ;
+            return Ok(items);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItemById(int id)
         {
-           var item =  await _itemRepository.GetItemByIdAsync(id);
+            var item = await _itemRepository.GetItemByIdAsync(id);
 
-            
 
-            if(item != null) return Ok(_mapper.Map<ItemDto>(item));
+
+            if (item != null) return Ok(_mapper.Map<ItemDto>(item));
             return NotFound("Item not found");
         }
 
@@ -84,19 +84,84 @@ namespace TradeApp.Controllers
         public async Task<ActionResult<List<ItemDto>>> GetItemsByOwnerId(int ownerId)
         {
             var items = await _itemRepository.GetItemsByOwnerIdAsync(ownerId);
-            
+
             if (items == null) return NotFound("this user does not have items");
             return Ok(_mapper.Map<ItemDto>(items));
         }
 
 
-        //Not Tested!
+
+        [Authorize]
+        [HttpPost("{id}/addOffer")]
+        public async Task<ActionResult> AddOffer(int id, AddOfferDto addOfferDto)
+        {
+            var userName = User.GetUsername();
+            if (userName == null) return NotFound("Username in token not found");
+            var currentUser = await _userRepository.GetUserByUsername(userName);
+            if (currentUser == null) return Unauthorized();
+            var item = await _itemRepository.GetItemByIdAsync(id);
+            if (item == null) return NotFound();
+            if (currentUser.Items != null && currentUser.Items.Contains(item)) return BadRequest("You can not offer yourself");
+            var offerDto = new OfferDto
+            {
+                Comment = addOfferDto.OfferComment,
+                PosterUsername = User.GetUsername(),
+                Created = DateTime.UtcNow,
+            };
+
+            var offerToAdd = _mapper.Map<Offer>(offerDto);
+
+            item.Offers.Add(offerToAdd);
+            await _itemRepository.SaveChangesAsync();
+            return Ok("Offer was successfully created");
+        }
+
+        [Authorize]
+        [HttpGet("offers")]
+        public async Task<ActionResult<OfferDto>> GetOffers()
+        {
+            //Must get only currentuser's offers + offer deleting function must be added
+            var userName = User.GetUsername();
+            if (userName == null) return NotFound("Username in token not found");
+            var currentUser = _userRepository.GetUserByUsername(userName);
+            if (currentUser == null) return Unauthorized();
+            var items = await _itemRepository.GetItemsAsync();
+            if (items == null) return NotFound();
+            var offers = await _itemRepository.GetOfferDto(userName, items);
+            if (offers == null) return NotFound();
+
+            return Ok(offers);
+        }
+
+        [Authorize]
+        [HttpDelete("offers/{id}")]
+        public async Task<ActionResult> DeleteOffer(int id)
+        {
+            var username = User.GetUsername();
+
+            var items = await _itemRepository.GetItemsAsync();
+            if (items == null) return NotFound();
+            var offers = items.SelectMany(i => i.Offers).Where(o => o.PosterUsername == username);
+            if (offers == null) return NotFound();
+            var offerToDelete = offers.FirstOrDefault(o => o.Id == id);
+            if (offerToDelete == null) return NotFound();
+            var item = items.Where(i => i.Offers.Contains(offerToDelete)).FirstOrDefault();
+            if (item == null) return NotFound();
+            item.Offers.Remove(offerToDelete);
+
+            if (await _itemRepository.SaveChangesAsync()) return NoContent();
+
+            return BadRequest("Offer could not be deleted");
+
+        }
+
+
         [Authorize]
         [HttpPost("{id}/itemPhoto/add")]
-        public async Task<ActionResult<ItemPhotoDto>> AddItemPhoto(int id,IFormFile file) 
+        public async Task<ActionResult<ItemPhotoDto>> AddItemPhoto(int id, IFormFile file)
         {
             var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
-            if(currentUser == null) return Unauthorized();
+            if (currentUser == null) return Unauthorized();
 
 
             //Find the item
@@ -104,7 +169,7 @@ namespace TradeApp.Controllers
             if (item == null) return NotFound("Item was not found");
             if (!currentUser.Items.Contains(item)) return BadRequest("you do not have access for this item");
             var result = await _itemPhotoService.AddItemPhotoAsync(file);
-            if(result.Error != null) return BadRequest(result.Error.Message);
+            if (result.Error != null) return BadRequest(result.Error.Message);
             var itemPhoto = new ItemPhoto()
             {
                 PhotoUrl = result.SecureUrl.AbsoluteUri,
@@ -116,35 +181,35 @@ namespace TradeApp.Controllers
             item.Photos.Add(itemPhoto);
 
             //Add in List the object
-          /**    var itemPhotoToAdd = new ItemPhoto()
-                 {
-                      PhotoUrl = addPhotoItemDto.PhotoUrl,
-               Item = item,
-                ItemId = item.Id
-              }; 
-            item.Photos.Add(photo); 
-          
-            */
+            /**    var itemPhotoToAdd = new ItemPhoto()
+                   {
+                        PhotoUrl = addPhotoItemDto.PhotoUrl,
+                 Item = item,
+                  ItemId = item.Id
+                }; 
+              item.Photos.Add(photo); 
+            
+              */
 
 
-            if(await _itemRepository.SaveChangesAsync())
+            if (await _itemRepository.SaveChangesAsync())
             {
-                return Created("Photo",_mapper.Map<ItemPhotoDto>(itemPhoto));
+                return Created("Photo", _mapper.Map<ItemPhotoDto>(itemPhoto));
             }
 
             return BadRequest("Problem adding item photo");
 
-        /* await _itemRepository.UpdateItem(item);
+            /* await _itemRepository.UpdateItem(item);
 
-            var itemToReturn = _mapper.Map<List<ItemPhotoDto>>(item.Photos);
+                var itemToReturn = _mapper.Map<List<ItemPhotoDto>>(item.Photos);
 
-            await _itemRepository.SaveChangesAsync();
+                await _itemRepository.SaveChangesAsync();
 
-            return Ok(itemToReturn);   
-        */
-        } 
-        
-       
+                return Ok(itemToReturn);   
+            */
+        }
+
+
         [HttpGet("{id}/itemPhoto")]
         public async Task<ActionResult<List<ItemPhotoDto>>> GetItemPhotoByItemId(int id)
         {
@@ -154,7 +219,7 @@ namespace TradeApp.Controllers
         }
         [Authorize]
         [HttpPut("{id}/itemPhoto/set-main-photo/{itemPhotoId}")]
-        public async Task<ActionResult> SetMainItemPhoto(int id,int itemPhotoId)
+        public async Task<ActionResult> SetMainItemPhoto(int id, int itemPhotoId)
         {
             var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
             if (currentUser == null) return Unauthorized();
@@ -203,11 +268,11 @@ namespace TradeApp.Controllers
 
         [Authorize]
         [HttpDelete("{id}/itemPhoto/delete/{itemPhotoId}")]
-        public async Task<ActionResult> DeleteItemPhoto(int id,int itemPhotoId)
+        public async Task<ActionResult> DeleteItemPhoto(int id, int itemPhotoId)
         {
             var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
             if (currentUser == null) return Unauthorized();
-            
+
             var item = await _itemRepository.GetItemByIdAsync(id);
             if (item == null) return NotFound();
             if (!currentUser.Items.Contains(item)) return BadRequest("you do not have access for this item");

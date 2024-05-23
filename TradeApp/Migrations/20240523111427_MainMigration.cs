@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace TradeApp.Data.Migrations
+namespace TradeApp.Migrations
 {
     /// <inheritdoc />
     public partial class MainMigration : Migration
@@ -174,7 +174,8 @@ namespace TradeApp.Data.Migrations
                     MainPhotoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     OwnerId = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TradeFor = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    TradeFor = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -203,6 +204,28 @@ namespace TradeApp.Data.Migrations
                     table.PrimaryKey("PK_ItemPhotos", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ItemPhotos_Items_ItemId",
+                        column: x => x.ItemId,
+                        principalTable: "Items",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Offer",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PosterUsername = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ItemId = table.Column<int>(type: "int", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Offer", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Offer_Items_ItemId",
                         column: x => x.ItemId,
                         principalTable: "Items",
                         principalColumn: "Id",
@@ -257,6 +280,11 @@ namespace TradeApp.Data.Migrations
                 name: "IX_Items_OwnerId",
                 table: "Items",
                 column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Offer_ItemId",
+                table: "Offer",
+                column: "ItemId");
         }
 
         /// <inheritdoc />
@@ -279,6 +307,9 @@ namespace TradeApp.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ItemPhotos");
+
+            migrationBuilder.DropTable(
+                name: "Offer");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradeApp.Data;
 using TradeApp.Dtos;
@@ -39,10 +38,9 @@ namespace TradeApp.Repositories
             
         }
 
-
         public Task<Item> GetItemByIdAsync(int id)
         {
-            return _context.Item.Include(i => i.Photos).FirstOrDefaultAsync(i => i.Id == id);
+            return _context.Item.Include(i => i.Photos).Include(i => i.Owner).Include(i => i.Offers).FirstOrDefaultAsync(i => i.Id == id);
 
         }
 
@@ -60,7 +58,7 @@ namespace TradeApp.Repositories
 
         public Task<List<Item>> GetItemsAsync()
         {
-            return _context.Item.Include(item => item.Owner).ToListAsync();
+            return _context.Item.Include(item => item.Owner).Include(i=> i.Offers).ToListAsync();
         }
 
         public Task<List<Item>> GetItemsByOwnerIdAsync(int ownerId)
@@ -73,6 +71,19 @@ namespace TradeApp.Repositories
             var query =  _context.Item.Include(i => i.Owner).ProjectTo<ItemDto>(_mapper.ConfigurationProvider).AsQueryable().AsNoTracking();
    
             return await PagedList<ItemDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize); ;
+        }
+
+        public async Task<List<OfferDto>> GetOfferDto(string username,List<Item> items)
+        {
+            var itemIds = items.Select(i => i.Id);
+
+            var offers = await _context.Item.Where(i => itemIds.Contains(i.Id) && i.Owner.UserName == username).SelectMany(i => i.Offers).ToListAsync();
+
+           
+
+            var offersDto = _mapper.Map<List<OfferDto>>(offers);
+
+            return offersDto;
         }
 
         public async Task<bool> SaveChangesAsync()
