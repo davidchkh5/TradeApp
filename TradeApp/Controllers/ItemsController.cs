@@ -125,7 +125,7 @@ namespace TradeApp.Controllers
             //Must get only currentuser's offers + offer deleting function must be added
             var userName = User.GetUsername();
             if (userName == null) return NotFound("Username in token not found");
-            var currentUser = _userRepository.GetUserByUsernameAsync(userName);
+            var currentUser =  await _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return Unauthorized();
             var items = await _itemRepository.GetItemsAsync();
             if (items == null) return NotFound();
