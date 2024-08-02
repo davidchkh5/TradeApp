@@ -24,7 +24,7 @@ namespace TradeApp.Repositories
             return await _context.Users.FindAsync(id);
         }
 
-        public async Task<AppUser> GetUserByUsername(string username)
+        public async Task<AppUser> GetUserByUsernameAsync(string username)
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
         }
@@ -41,7 +41,7 @@ namespace TradeApp.Repositories
             return await _context.SaveChangesAsync() > 0;  
         }
 
-        public Task UpdateUserAsync(AppUser user)
+        public Task UpdateUser(AppUser user)
         {
             _context.Users.Update(user);
             return Task.CompletedTask;

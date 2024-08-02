@@ -23,6 +23,7 @@ namespace TradeApp.Controllers
             _mapper = mapper;
             _itemPhotoService = itemPhotoService;
         }
+        
 
 
         [Authorize]
@@ -31,8 +32,9 @@ namespace TradeApp.Controllers
         {
             var userName = User.GetUsername();
             if (userName == null) return Unauthorized();
-            var currentUser = await _userRepository.GetUserByUsername(userName);
+            var currentUser = await _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return NotFound();
+
 
             var item = new Item
             {
@@ -43,7 +45,7 @@ namespace TradeApp.Controllers
                 MainPhotoUrl = addItemDto.ItemPhotoUrl,
                 OwnerId = currentUser.Id,
             };
-            var itemToReturn = _mapper.Map<ItemDto>(item);
+           //var itemToReturn = _mapper.Map<ItemDto>(item);
 
             await _itemRepository.AddItemAsync(item);
             if (await _itemRepository.SaveChangesAsync())
@@ -97,7 +99,7 @@ namespace TradeApp.Controllers
         {
             var userName = User.GetUsername();
             if (userName == null) return NotFound("Username in token not found");
-            var currentUser = await _userRepository.GetUserByUsername(userName);
+            var currentUser = await _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return Unauthorized();
             var item = await _itemRepository.GetItemByIdAsync(id);
             if (item == null) return NotFound();
@@ -123,7 +125,7 @@ namespace TradeApp.Controllers
             //Must get only currentuser's offers + offer deleting function must be added
             var userName = User.GetUsername();
             if (userName == null) return NotFound("Username in token not found");
-            var currentUser = _userRepository.GetUserByUsername(userName);
+            var currentUser = _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return Unauthorized();
             var items = await _itemRepository.GetItemsAsync();
             if (items == null) return NotFound();
@@ -141,10 +143,15 @@ namespace TradeApp.Controllers
 
             var items = await _itemRepository.GetItemsAsync();
             if (items == null) return NotFound();
-            var offers = items.SelectMany(i => i.Offers).Where(o => o.PosterUsername == username);
-            if (offers == null) return NotFound();
-            var offerToDelete = offers.FirstOrDefault(o => o.Id == id);
-            if (offerToDelete == null) return NotFound();
+            var offer = items.SelectMany(i => i.Offers).Where(o => o.Id == id);
+            if(offer == null) return NotFound();
+            if (offer.FirstOrDefault().PosterUsername != username) return Forbid();
+            var offerToDelete = offer.FirstOrDefault();
+            /**  var offers = items.SelectMany(i => i.Offers).Where(o => o.PosterUsername == username);
+              if (offers == null) return NotFound();
+              var offerToDelete = offers.FirstOrDefault(o => o.Id == id);
+              if (offerToDelete == null) return NotFound();
+              */
             var item = items.Where(i => i.Offers.Contains(offerToDelete)).FirstOrDefault();
             if (item == null) return NotFound();
             item.Offers.Remove(offerToDelete);
@@ -160,7 +167,7 @@ namespace TradeApp.Controllers
         [HttpPost("{id}/itemPhoto/add")]
         public async Task<ActionResult<ItemPhotoDto>> AddItemPhoto(int id, IFormFile file)
         {
-            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            var currentUser = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             if (currentUser == null) return Unauthorized();
 
 
@@ -217,11 +224,12 @@ namespace TradeApp.Controllers
             var photosToReturn = _mapper.Map<List<ItemPhotoDto>>(photos);
             return photosToReturn;
         }
+
         [Authorize]
         [HttpPut("{id}/itemPhoto/set-main-photo/{itemPhotoId}")]
         public async Task<ActionResult> SetMainItemPhoto(int id, int itemPhotoId)
         {
-            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            var currentUser = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             if (currentUser == null) return Unauthorized();
             var item = await _itemRepository.GetItemByIdAsync(id);
             if (item == null) return NotFound();
@@ -241,7 +249,7 @@ namespace TradeApp.Controllers
 
             return BadRequest("Problem setting the main photo");
         }
-
+        
 
         /**   [HttpPut("{id}/itemPhoto/delete/{itemPhotoId}")]
            public async Task<ActionResult> DeleteItemPhoto(int id, int itemPhotoId)
@@ -270,7 +278,7 @@ namespace TradeApp.Controllers
         [HttpDelete("{id}/itemPhoto/delete/{itemPhotoId}")]
         public async Task<ActionResult> DeleteItemPhoto(int id, int itemPhotoId)
         {
-            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            var currentUser = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             if (currentUser == null) return Unauthorized();
 
             var item = await _itemRepository.GetItemByIdAsync(id);

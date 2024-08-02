@@ -36,17 +36,37 @@ namespace TradeApp.Controllers
 
 
         [Authorize]
+        [HttpGet("{userName}")]
+        public async Task<ActionResult<MemberDto>> GetUser(string userName)
+        {
+          
+            var user = await _userRepository.GetUserByUsernameAsync(userName);
+            if (user == null) return NotFound("User was not found");
+
+            var userToReturn = _mapper.Map<MemberDto>(user);
+            return Ok(userToReturn);
+        }
+
+        [Authorize]
         [HttpPut("update")]
         public async Task<ActionResult<MemberDto>> UpdateUser(UpdateUserDto updateUserDto)
         {
-            var currentUser = await _userRepository.GetUserByUsername(User.GetUsername());
+            var currentUser = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             if (currentUser == null) return Unauthorized();
             //Validation of email and phone number before updating
             var users = await _userRepository.GetUsersAsync();
             var usersEmails = users.Select(u => u.Email).AsQueryable();
             var usersPhoneNumber = users.Select(u => u.PhoneNumber).AsQueryable();
-            if (usersPhoneNumber.Contains(updateUserDto.PhoneNumber)) return BadRequest("This phone number is already taken");
-            if (usersEmails.Contains(updateUserDto.Email)) return BadRequest("This email address is already taken");
+            if (!currentUser.Email.Equals(updateUserDto.Email))
+            {
+                if (usersEmails.Contains(updateUserDto.Email)) return BadRequest("This email address is already taken"); 
+            }
+
+            if(!currentUser.PhoneNumber.Equals(updateUserDto.PhoneNumber))
+            {
+                if (usersPhoneNumber.Contains(updateUserDto.PhoneNumber)) return BadRequest("This phone number is already taken");
+            }
+
            _mapper.Map(updateUserDto, currentUser);
         /*    var userToReturn = _mapper.Map<MemberDto>(userToUpdate);
             await _userRepository.UpdateUserAsync(userToUpdate);

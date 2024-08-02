@@ -14,6 +14,18 @@ namespace TradeApp
 
             // Add services to the container.
 
+            //here we add cors policy
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalhost4200",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:4200") 
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddApplicationServices(builder.Configuration);
             builder.Services.AddIdentityService(builder.Configuration);
@@ -22,10 +34,8 @@ namespace TradeApp
             {
                 opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-            builder.Services.AddCors();
 
-
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle33333333
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -38,13 +48,13 @@ namespace TradeApp
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(builder => builder.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200"));
+            //here we use our cors policy
+            app.UseCors("AllowLocalhost4200");
 
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
-            app.UseAuthorization(); 
-
+            app.UseAuthorization();
 
             app.MapControllers();
 
@@ -55,13 +65,14 @@ namespace TradeApp
                 var context = services.GetRequiredService<DataContext>();
                 var userManager = services.GetRequiredService<UserManager<AppUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-               await context.Database.MigrateAsync();
-               await AdminCreateExtension.CreateAdmin(userManager,roleManager);
+                await context.Database.MigrateAsync();
+                await AdminCreateExtension.CreateAdmin(userManager, roleManager);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-            };
+            }
+
             app.Run();
         }
     }

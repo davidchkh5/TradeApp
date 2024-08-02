@@ -6,10 +6,10 @@ namespace TradeApp.Interfaces
     {
         Task<List<AppUser>> GetUsersAsync();
         Task<AppUser> GetUserById(int id);
-        Task<AppUser> GetUserByUsername(string username);
+        Task<AppUser> GetUserByUsernameAsync(string username);
         Task AddUserAsync(AppUser user);
         
-        Task UpdateUserAsync(AppUser user);
+        Task UpdateUser(AppUser user);
         Task<bool> SaveChangesAsync();
 
 

@@ -38,9 +38,9 @@ namespace TradeApp.Repositories
             
         }
 
-        public Task<Item> GetItemByIdAsync(int id)
+        public async Task<Item> GetItemByIdAsync(int id)
         {
-            return _context.Item.Include(i => i.Photos).Include(i => i.Owner).Include(i => i.Offers).FirstOrDefaultAsync(i => i.Id == id);
+            return await _context.Item.Include(i => i.Photos).Include(i => i.Owner).Include(i => i.Offers).FirstOrDefaultAsync(i => i.Id == id);
 
         }
 
@@ -56,14 +56,14 @@ namespace TradeApp.Repositories
             return itemPhoto;
         }
 
-        public Task<List<Item>> GetItemsAsync()
+        public async Task<List<Item>> GetItemsAsync()
         {
-            return _context.Item.Include(item => item.Owner).Include(i=> i.Offers).ToListAsync();
+            return await _context.Item.Include(item => item.Owner).Include(i=> i.Offers).ToListAsync();
         }
 
-        public Task<List<Item>> GetItemsByOwnerIdAsync(int ownerId)
+        public async Task<List<Item>> GetItemsByOwnerIdAsync(int ownerId)
         {
-            return _context.Item.Where(i => i.OwnerId == ownerId).ToListAsync();
+            return await _context.Item.Where(i => i.OwnerId == ownerId).ToListAsync();
         }
 
         public async Task<PagedList<ItemDto>> GetItemsDtoAsync(UserParams userParams)
