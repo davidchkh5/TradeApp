@@ -81,14 +81,18 @@ namespace TradeApp.Controllers
             return NotFound("Item not found");
         }
 
-        [HttpGet("personal/{ownerId}")]
 
-        public async Task<ActionResult<List<ItemDto>>> GetItemsByOwnerId(int ownerId)
+        [HttpGet("personal")]
+        public async Task<ActionResult<List<ItemDto>>> GetItemsByOwnerUsername()
         {
-            var items = await _itemRepository.GetItemsByOwnerIdAsync(ownerId);
+            var username = User.GetUsername();
+            if (string.IsNullOrEmpty(username)) return Unauthorized("User not found");
 
-            if (items == null) return NotFound("this user does not have items");
-            return Ok(_mapper.Map<ItemDto>(items));
+            var items = await _itemRepository.GetItemsByOwnerUsernameAsync(username);
+
+            if (items == null || items.Count == 0) return NotFound("Items not found");
+
+            return Ok(items);
         }
 
 

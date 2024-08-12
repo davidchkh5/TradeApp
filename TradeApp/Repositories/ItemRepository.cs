@@ -44,6 +44,13 @@ namespace TradeApp.Repositories
 
         }
 
+        public async Task<List<ItemDto>> GetItemsByOwnerUsernameAsync(string username)
+        {
+            var items = await _context.Item.Where(i => i.Owner.UserName == username).Include(i => i.Offers).ToListAsync();
+
+            return _mapper.Map<List<ItemDto>>(items);
+        }
+
 
         //It must be finished
         public async Task<List<ItemPhoto>> GetItemPhotoByItemIdAsync(int itemId)
