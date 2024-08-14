@@ -23,18 +23,39 @@ namespace TradeApp.Controllers
             _mapper = mapper;
             _itemPhotoService = itemPhotoService;
         }
-        
+
 
 
         [Authorize]
         [HttpPost("add")]
-        public async Task<ActionResult> AddItem(AddItemDto addItemDto)
+        public async Task<ActionResult> AddItem([FromForm] AddItemDto addItemDto)
         {
             var userName = User.GetUsername();
             if (userName == null) return Unauthorized();
+
             var currentUser = await _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return NotFound();
 
+            var photoLists = new List<ItemPhoto>();
+
+            foreach (IFormFile fileItem in addItemDto.Files)
+            {
+                var result = await _itemPhotoService.AddItemPhotoAsync(fileItem);
+                if (result.Error != null) return BadRequest(result.Error.Message);
+
+                var itemPhoto = new ItemPhoto()
+                {
+                    PhotoUrl = result.SecureUrl.AbsoluteUri,
+                    PublicId = result.PublicId
+                };
+
+                photoLists.Add(itemPhoto);
+            }
+
+            var mappedPhotoList = _mapper.Map<List<ItemPhotoDto>>(photoLists);
+
+            // Safeguard against potential index issues.
+            var mainPhotoUrl = mappedPhotoList.FirstOrDefault()?.PhotoUrl;
 
             var item = new Item
             {
@@ -42,10 +63,10 @@ namespace TradeApp.Controllers
                 Description = addItemDto.Description,
                 Name = addItemDto.Name,
                 Owner = currentUser,
-                MainPhotoUrl = addItemDto.ItemPhotoUrl,
+                MainPhotoUrl = mainPhotoUrl,
                 OwnerId = currentUser.Id,
+                Photos = photoLists
             };
-           //var itemToReturn = _mapper.Map<ItemDto>(item);
 
             await _itemRepository.AddItemAsync(item);
             if (await _itemRepository.SaveChangesAsync())
@@ -54,7 +75,7 @@ namespace TradeApp.Controllers
             }
             else
             {
-                return BadRequest("Could not be created an item");
+                return BadRequest("Could not create the item");
             }
         }
 
