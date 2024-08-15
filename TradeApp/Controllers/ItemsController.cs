@@ -79,6 +79,26 @@ namespace TradeApp.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteItem(int id)
+        {
+            var userName = User.GetUsername();
+
+            var user = await _userRepository.GetUserByUsernameAsync(userName);
+
+            if (user == null) return NotFound("User not found");
+
+            var item = user.Items.FirstOrDefault(i => i.Id == id);
+
+            if (item == null) return BadRequest("You dont have this item in your list");
+
+            await _itemRepository.DeleteItemAsync(item);
+
+            if (await _itemRepository.SaveChangesAsync()) return Ok("Item was deleted successfully");
+
+            return BadRequest("Changes could not be saved");
+        }
+
 
 
         [HttpGet]
@@ -111,7 +131,7 @@ namespace TradeApp.Controllers
 
             var items = await _itemRepository.GetItemsByOwnerUsernameAsync(username);
 
-            if (items == null || items.Count == 0) return NotFound("Items not found");
+            
 
             return Ok(items);
         }

@@ -77,7 +77,7 @@ namespace TradeApp.Controllers
         {
            var item = await _itemRepository.GetItemByIdAsync(ItemId);
             if (item == null) return NotFound("Item was not found");
-            if (await _itemRepository.DeleteItemAsync(ItemId) == false) return BadRequest("The item could not be deleted");
+            if (await _itemRepository.DeleteItemAsync(item) == false) return BadRequest("The item could not be deleted");
             return Ok("The itme has deleted successfully");
         }
 

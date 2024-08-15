@@ -26,7 +26,7 @@ namespace TradeApp.Repositories
 
         public async Task<AppUser> GetUserByUsernameAsync(string username)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            return await _context.Users.Include(u=> u.Items).FirstOrDefaultAsync(u => u.UserName == username);
         }
 
         public async Task<List<AppUser>> GetUsersAsync()

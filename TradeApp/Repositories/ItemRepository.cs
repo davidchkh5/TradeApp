@@ -27,12 +27,9 @@ namespace TradeApp.Repositories
 
        
 
-        public async Task<bool> DeleteItemAsync(int id)
+        public async Task<bool> DeleteItemAsync(Item item)
         {
-            var item = await _context.Item.FirstOrDefaultAsync(i => i.Id == id);
-
-            if (item == null) return false;
-
+            
             if(_context.Item.Remove(item) == null) return true;
             return false;
             

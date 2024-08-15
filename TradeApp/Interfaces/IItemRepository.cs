@@ -14,7 +14,7 @@ namespace TradeApp.Interfaces
         Task<List<Item>> GetItemsByOwnerIdAsync(int ownerId);
         Task<List<ItemDto>> GetItemsByOwnerUsernameAsync(string username);
         Task<List<ItemPhoto>> GetItemPhotoByItemIdAsync(int itemId);
-        Task<bool> DeleteItemAsync(int id);
+        Task<bool> DeleteItemAsync(Item item);
         Task<bool> SaveChangesAsync();
         Task UpdateItem(Item item);
 
