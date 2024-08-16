@@ -36,26 +36,32 @@ namespace TradeApp.Controllers
             var currentUser = await _userRepository.GetUserByUsernameAsync(userName);
             if (currentUser == null) return NotFound();
 
+            
+            var mainPhotoUrl = "idx.png";
             var photoLists = new List<ItemPhoto>();
 
-            foreach (IFormFile fileItem in addItemDto.Files)
+            if (addItemDto.Files != null)
             {
-                var result = await _itemPhotoService.AddItemPhotoAsync(fileItem);
-                if (result.Error != null) return BadRequest(result.Error.Message);
-
-                var itemPhoto = new ItemPhoto()
+                
+                foreach (IFormFile fileItem in addItemDto.Files)
                 {
-                    PhotoUrl = result.SecureUrl.AbsoluteUri,
-                    PublicId = result.PublicId
-                };
+                    var result = await _itemPhotoService.AddItemPhotoAsync(fileItem);
+                    if (result.Error != null) return BadRequest(result.Error.Message);
 
-                photoLists.Add(itemPhoto);
+                    var itemPhoto = new ItemPhoto()
+                    {
+                        PhotoUrl = result.SecureUrl.AbsoluteUri,
+                        PublicId = result.PublicId
+                    };
+
+                    photoLists.Add(itemPhoto);
+                }
+
+                var mappedPhotoList = _mapper.Map<List<ItemPhotoDto>>(photoLists);
+                mainPhotoUrl = mappedPhotoList.FirstOrDefault()?.PhotoUrl;
+
+
             }
-
-            var mappedPhotoList = _mapper.Map<List<ItemPhotoDto>>(photoLists);
-
-            // Safeguard against potential index issues.
-            var mainPhotoUrl = mappedPhotoList.FirstOrDefault()?.PhotoUrl;
 
             var item = new Item
             {
@@ -88,10 +94,14 @@ namespace TradeApp.Controllers
 
             if (user == null) return NotFound("User not found");
 
-            var item = user.Items.FirstOrDefault(i => i.Id == id);
+            var item = await _itemRepository.GetItemByIdAsync(id);
 
             if (item == null) return BadRequest("You dont have this item in your list");
 
+            foreach(var itemPhoto in item.Photos)
+            {
+                await _itemPhotoService.DeleteItemPhotoAsync(itemPhoto.PublicId);
+            }
             await _itemRepository.DeleteItemAsync(item);
 
             if (await _itemRepository.SaveChangesAsync()) return Ok("Item was deleted successfully");
