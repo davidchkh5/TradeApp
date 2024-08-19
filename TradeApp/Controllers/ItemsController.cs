@@ -75,9 +75,11 @@ namespace TradeApp.Controllers
             };
 
             await _itemRepository.AddItemAsync(item);
+       
             if (await _itemRepository.SaveChangesAsync())
             {
-                return Ok("Item Has Created Successfully");
+                var itemToReturn = _mapper.Map<ItemDto>(item);
+                return Ok(itemToReturn);
             }
             else
             {
