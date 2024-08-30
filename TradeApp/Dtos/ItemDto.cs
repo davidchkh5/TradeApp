@@ -12,6 +12,8 @@ namespace TradeApp.Dtos
         public string OwnerUsername { get; set; }
         public string Description { get; set; }
         public string TradeFor { get; set; }
+        public string Type { get; set; }
+        
         public List<OfferDto> Offers { get; set; }
 
     }

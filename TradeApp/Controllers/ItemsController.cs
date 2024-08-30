@@ -128,9 +128,9 @@ namespace TradeApp.Controllers
         {
             var item = await _itemRepository.GetItemByIdAsync(id);
 
+            var itemToReturn = _mapper.Map<ItemDto>(item);
 
-
-            if (item != null) return Ok(_mapper.Map<ItemDto>(item));
+            if (item != null) return Ok(itemToReturn);
             return NotFound("Item not found");
         }
 
